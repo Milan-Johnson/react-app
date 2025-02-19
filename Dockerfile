@@ -1,23 +1,13 @@
-# Use an official Node.js runtime as the base image
-FROM node:lts
-
-# Set the working directory within the container
+# Stage 1: Build the React app
+FROM node:lts AS builder
 WORKDIR /app
-
-# Copy package.json and package-lock.json to the working directory
+RUN git clone https://github.com/Milan-Johnson/react-app.git .
 COPY package*.json ./
-
-# Install app dependencies
 RUN npm install
-
-# Copy the entire app to the working directory
 COPY . .
-
-# Build the React app
 RUN npm run build
-
-# Expose the port on which the app will run
-EXPOSE 3000
-
-# Start the app
-CMD ["npm", "start"]
+# Stage 2: Create the production image
+FROM nginx:alpine
+COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
